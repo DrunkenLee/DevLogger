@@ -5,6 +5,7 @@ import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import config from './config/index.js';
 import routes from './routes/index.js';
+import healthRoutes from './routes/healthRoutes.js';
 import requestLogger from './middlewares/requestLogger.js';
 import authentication from './middlewares/authentication.js';
 import notFound from './middlewares/notFound.js';
@@ -21,6 +22,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(globalLimiter);
 app.use(requestLogger);
+
+// Root-level health check for IIS/PM2 reverse proxy (http://localhost:PORT/health)
+app.use('/health', healthRoutes);
 
 const authUnlessHealth = (req, res, next) => {
   if (req.path.startsWith('/health')) {
