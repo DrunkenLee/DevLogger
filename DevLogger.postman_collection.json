@@ -53,7 +53,13 @@
           "name": "List Logs",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/logs",
               "host": ["{{baseUrl}}"],
@@ -88,6 +94,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
               }
             ],
             "body": {
@@ -125,7 +136,13 @@
           "name": "Get Log By ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/logs/{{logId}}",
               "host": ["{{baseUrl}}"],
@@ -156,7 +173,13 @@
           "name": "Delete Log By ID",
           "request": {
             "method": "DELETE",
-            "header": [],
+            "header": [
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/logs/{{logId}}",
               "host": ["{{baseUrl}}"],
@@ -186,6 +209,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
               }
             ],
             "body": {
@@ -224,10 +252,48 @@
       "name": "Errors (MSSQL)",
       "item": [
         {
-          "name": "List Errors",
+          "name": "List Errors - No Auth (401)",
           "request": {
             "method": "GET",
             "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/errors?limit=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["errors"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Errors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/errors?limit=10",
               "host": ["{{baseUrl}}"],
@@ -264,7 +330,13 @@
           "name": "List Errors With Filters",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/errors?status_code=500&search=timeout&from=2024-01-01&to=2026-12-31&limit=5",
               "host": ["{{baseUrl}}"],
@@ -317,7 +389,13 @@
           "name": "Get Error By ID",
           "request": {
             "method": "GET",
-            "header": [],
+            "header": [
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/errors/{{errorId}}",
               "host": ["{{baseUrl}}"],
@@ -347,6 +425,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
               }
             ],
             "body": {
@@ -390,6 +473,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
               }
             ],
             "body": {
@@ -430,6 +518,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
               }
             ],
             "body": {
@@ -474,6 +567,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
               }
             ],
             "body": {
@@ -516,6 +614,11 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
               }
             ],
             "body": {

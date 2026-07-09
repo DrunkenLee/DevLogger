@@ -1,8 +1,9 @@
 import request from 'supertest';
-import app from '../src/app.js';
+import { loadApp } from './loadApp.js';
 
 describe('Health API', () => {
   test('GET /api/v1/health returns service status', async () => {
+    const { app } = await loadApp();
     const res = await request(app).get('/api/v1/health').expect(200);
 
     expect(res.body.success).toBe(true);
@@ -15,6 +16,7 @@ describe('Health API', () => {
   });
 
   test('undefined routes return a standardized 404 response', async () => {
+    const { app } = await loadApp();
     const res = await request(app).get('/api/v1/not-a-real-route').expect(404);
 
     expect(res.body.success).toBe(false);

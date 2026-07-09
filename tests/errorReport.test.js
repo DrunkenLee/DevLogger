@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
+import { loadApp, resetEmailLimiter } from './loadApp.js';
 
 process.setMaxListeners(20);
 
@@ -17,26 +18,6 @@ const sampleReport = {
   userid: 'SINCHEN',
   delegatedto: 'SINCHEN',
   auth_token: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
-};
-
-const loadApp = async ({ transporter } = {}) => {
-  jest.resetModules();
-  jest.clearAllMocks();
-
-  const queryMock = jest.fn();
-
-  await jest.unstable_mockModule('../src/config/db.js', () => ({
-    connectDB: jest.fn(),
-    query: queryMock,
-    closeDb: jest.fn(),
-  }));
-
-  await jest.unstable_mockModule('../src/config/email.js', () => ({
-    default: transporter ?? null,
-  }));
-
-  const { default: app } = await import('../src/app.js');
-  return { app, queryMock };
 };
 
 describe('POST /api/v1/errors/report', () => {
@@ -140,5 +121,31 @@ describe('POST /api/v1/errors/report', () => {
 
     expect(res.body.success).toBe(false);
     expect(res.body.message).toMatch(/validation error/i);
+  });
+});
+
+describe('POST /api/v1/errors/report rate limiting', () => {
+  test('returns 429 after 10 requests from the same IP', async () => {
+    const sendMailMock = jest.fn().mockResolvedValue({
+      messageId: 'report-message-id',
+    });
+    const { app, queryMock } = await loadApp({
+      transporter: { sendMail: sendMailMock },
+    });
+    queryMock.mockResolvedValue([{ id: 9999 }]);
+
+    await resetEmailLimiter();
+
+    for (let i = 0; i < 10; i += 1) {
+      await request(app).post(REPORT_URL).send(sampleReport).expect(200);
+    }
+
+    const res = await request(app)
+      .post(REPORT_URL)
+      .send(sampleReport)
+      .expect(429);
+
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/too many requests/i);
   });
 });

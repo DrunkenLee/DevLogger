@@ -1,10 +1,11 @@
 import request from 'supertest';
-import app from '../src/app.js';
+import { loadApp } from './loadApp.js';
 
 const LOGS_URL = '/api/v1/logs';
 
 describe('Logs API', () => {
   test('GET /api/v1/logs returns a list of logs', async () => {
+    const { app } = await loadApp();
     const res = await request(app).get(LOGS_URL).expect(200);
 
     expect(res.body.success).toBe(true);
@@ -12,6 +13,7 @@ describe('Logs API', () => {
   });
 
   test('POST /api/v1/logs creates a new log entry', async () => {
+    const { app } = await loadApp();
     const payload = {
       level: 'info',
       message: 'Jest test log',
@@ -30,6 +32,7 @@ describe('Logs API', () => {
   });
 
   test('POST /api/v1/logs rejects invalid payloads with 400', async () => {
+    const { app } = await loadApp();
     const res = await request(app)
       .post(LOGS_URL)
       .send({ level: 'critical', message: '' })
@@ -40,6 +43,7 @@ describe('Logs API', () => {
   });
 
   test('full log lifecycle: create, read, delete', async () => {
+    const { app } = await loadApp();
     const createRes = await request(app)
       .post(LOGS_URL)
       .send({ level: 'debug', message: 'Lifecycle log' })

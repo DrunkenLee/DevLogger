@@ -6,6 +6,7 @@ A minimal Node.js backend boilerplate using Express, Pino, Zod, and Jest with na
 
 - ES modules (`import`/`export`) across the whole project
 - Express server with Helmet, CORS, compression, cookie parsing, and rate limiting
+- Bearer token authentication backed by an external LMS decode service
 - Structured logging with Pino
 - Centralized error handling with a custom `ApiError` class
 - Zod validation for incoming request bodies
@@ -99,6 +100,58 @@ DevLogger/
 | `npm run lint`     | Lint all source and test files              |
 | `npm run lint:fix` | Lint and automatically fix issues           |
 
+## Authentication
+
+All routes under `/api/v1` require authentication except `GET /api/v1/health`. The server validates the incoming token by calling the LMS decode endpoint configured in `LMS_DECODE_URL`.
+
+Send the token in either of these headers:
+
+```http
+authentication: <token>
+```
+
+or
+
+```http
+Authorization: Bearer <token>
+```
+
+The `authentication` header takes precedence. If the `Authorization` header is used, the `Bearer ` prefix is stripped automatically.
+
+Requests without a token, with an invalid token, or when the LMS decode service is unreachable return `401 Unauthorized`.
+
+## Rate Limiting
+
+A global rate limiter runs before authentication:
+
+- **All requests:** 100 requests per 15 minutes per IP.
+
+Email endpoints have an additional, stricter limit:
+
+- **Email endpoints:** 10 requests per 15 minutes per IP for:
+  - `POST /api/v1/errors/:id/email`
+  - `POST /api/v1/errors/report`
+
+When a limit is exceeded the response is:
+
+```json
+{
+  "success": false,
+  "message": "Too many requests, please try again later.",
+  "data": null
+}
+```
+
+## LMS Decode Dependency
+
+Authentication relies on an external LMS decode service. The default URL is:
+
+```text
+http://192.168.1.38/api/lms-dev/v1/decode
+```
+
+Override it with the `LMS_DECODE_URL` environment variable. The service must accept a `GET` request with the token passed in the `access_token` header and return a user object containing `log_NIK`. The decode call times out after 5 seconds.
+
 ## Environment Variables
 
 | Variable               | Default                                            | Description                                               |
@@ -106,6 +159,7 @@ DevLogger/
 | `NODE_ENV`             | `development`                                      | Application environment                                   |
 | `PORT`                 | `3000`                                             | Port the server listens on                                |
 | `LOG_LEVEL`            | `info`                                             | Pino log level (trace, debug, info, warn, error, fatal)   |
+| `LMS_DECODE_URL`       | `http://192.168.1.38/api/lms-dev/v1/decode`        | External LMS token decode endpoint                        |
 | `MS_SQL_DB_SERVER`     | —                                                  | MSSQL server hostname/instance                            |
 | `MS_SQL_DB_NAME`       | —                                                  | MSSQL database name (e.g., `lapifactory`)                 |
 | `MS_SQL_DB_USER`       | —                                                  | MSSQL username                                            |
@@ -120,6 +174,8 @@ DevLogger/
 
 ## API Endpoints
 
+All endpoints except `GET /api/v1/health` require an authentication header.
+
 - `GET /api/v1/health` - Health check
 - `GET /api/v1/logs` - List all logs
 - `POST /api/v1/logs` - Create a new log
@@ -127,5 +183,5 @@ DevLogger/
 - `DELETE /api/v1/logs/:id` - Delete a log by ID
 - `GET /api/v1/errors` - List recent errors from `logging_mike` (supports `limit`, `status_code`, `search`, `from`, `to`)
 - `GET /api/v1/errors/:id` - Get a single error by ID
-- `POST /api/v1/errors/:id/email` - Send a full-context alert email for an existing error row
-- `POST /api/v1/errors/report` - Fallback: receive error context from the client, save it to `logging_mike`, and send an alert email
+- `POST /api/v1/errors/:id/email` - Send a full-context alert email for an existing error row (also limited to 10 req / 15 min per IP)
+- `POST /api/v1/errors/report` - Fallback: receive error context from the client, save it to `logging_mike`, and send an alert email (also limited to 10 req / 15 min per IP)

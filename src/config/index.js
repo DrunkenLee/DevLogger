@@ -16,6 +16,8 @@ export const config = {
   logLevel: process.env.LOG_LEVEL || 'info',
   apiVersion: 'v1',
   version: process.env.npm_package_version || '1.0.0',
+  lmsDecodeUrl:
+    process.env.LMS_DECODE_URL || 'http://192.168.1.38/api/lms-dev/v1/decode',
   db: {
     server: process.env.MS_SQL_DB_SERVER || '',
     database: process.env.MS_SQL_DB_NAME || '',

@@ -1,5 +1,6 @@
 import { jest } from '@jest/globals';
 import request from 'supertest';
+import { loadApp, resetEmailLimiter } from './loadApp.js';
 
 // Each dynamic import of the app registers a process exit listener.
 process.setMaxListeners(20);
@@ -41,26 +42,6 @@ const sampleError = {
   error_message: 'Connection timeout',
   error_stack: 'Error: Connection timeout\n    at handler (src/orders.js:12:5)',
   status_code: 500,
-};
-
-const loadApp = async ({ transporter } = {}) => {
-  jest.resetModules();
-  jest.clearAllMocks();
-
-  const queryMock = jest.fn();
-
-  await jest.unstable_mockModule('../src/config/db.js', () => ({
-    connectDB: jest.fn(),
-    query: queryMock,
-    closeDb: jest.fn(),
-  }));
-
-  await jest.unstable_mockModule('../src/config/email.js', () => ({
-    default: transporter ?? null,
-  }));
-
-  const { default: app } = await import('../src/app.js');
-  return { app, queryMock };
 };
 
 describe('Error log email alert validation', () => {
@@ -331,5 +312,31 @@ describe('POST /api/v1/errors/:id/email', () => {
 
     expect(res.body.success).toBe(false);
     expect(res.body.message).toMatch(/validation error/i);
+  });
+});
+
+describe('POST /api/v1/errors/:id/email rate limiting', () => {
+  test('returns 429 after 10 requests from the same IP', async () => {
+    const sendMailMock = jest.fn().mockResolvedValue({
+      messageId: 'mock-message-id',
+    });
+    const { app, queryMock } = await loadApp({
+      transporter: { sendMail: sendMailMock },
+    });
+    queryMock.mockResolvedValue([sampleError]);
+
+    await resetEmailLimiter();
+
+    for (let i = 0; i < 10; i += 1) {
+      await request(app).post(`${ERROR_URL}/1/email`).send({}).expect(200);
+    }
+
+    const res = await request(app)
+      .post(`${ERROR_URL}/1/email`)
+      .send({})
+      .expect(429);
+
+    expect(res.body.success).toBe(false);
+    expect(res.body.message).toMatch(/too many requests/i);
   });
 });
