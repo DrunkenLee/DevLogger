@@ -714,6 +714,64 @@ axios.interceptors.response.use(null, (error) =&gt; {
     <code class="inline">Authorization: Bearer &lt;token&gt;</code>. The widget
     sets both for you when you provide <code class="inline">token</code>.
   </div>
+
+  <div class="callout reveal" style="margin-top: 18px">
+    <strong>Prefer the raw API?</strong> Skip the widget and import the
+    ready-made Postman collection — every endpoint with example bodies and
+    tests, pre-pointed at the deployed base URL. Import the environment too for
+    the <code class="inline">baseUrl</code>/<code class="inline"
+      >authToken</code
+    >
+    variables.
+    <div
+      style="
+        margin-top: 14px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      "
+    >
+      <a
+        class="btn btn-primary"
+        href="DevLogger.postman_collection.json"
+        download
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="M7 10l5 5 5-5" />
+          <path d="M12 15V3" />
+        </svg>
+        Download Postman collection
+      </a>
+      <a
+        class="btn btn-ghost"
+        href="DevLogger.postman_environment.json"
+        download
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="M7 10l5 5 5-5" />
+          <path d="M12 15V3" />
+        </svg>
+        Environment
+      </a>
+    </div>
+  </div>
 </section>
 
 <!-- ===================== CTA ===================== -->
