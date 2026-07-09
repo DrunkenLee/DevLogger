@@ -62,6 +62,13 @@ DevLogger/
       logValidator.js
       emailSendValidator.js
       errorReportValidator.js
+  public/
+    index.html            # docs & landing page
+    workflow.html         # end-to-end workflow page
+    devlogger-modal.js    # the reusable error modal widget
+    assets/
+      site.css
+      site.js
   tests/
     health.test.js
     logs.test.js
@@ -185,3 +192,60 @@ All endpoints except `GET /api/v1/health` require an authentication header.
 - `GET /api/v1/errors/:id` - Get a single error by ID
 - `POST /api/v1/errors/:id/email` - Send a full-context alert email for an existing error row (also limited to 10 req / 15 min per IP)
 - `POST /api/v1/errors/report` - Fallback: receive error context from the client, save it to `logging_mike`, and send an alert email (also limited to 10 req / 15 min per IP)
+
+## Client Error Modal Widget
+
+DevLogger also ships a **reusable, framework-agnostic error modal** so every internal
+module reports errors the same way. It is a single self-contained file that injects its
+own styles and exposes one global, `DevLoggerModal`.
+
+The DevLogger server serves the widget and its documentation as static files:
+
+| URL                   | What it is                                                        |
+| --------------------- | ----------------------------------------------------------------- |
+| `/`                   | Docs & landing page — quickstart, copy-paste snippet, live demo   |
+| `/workflow.html`      | Workflow page — how a report flows end-to-end and why it helps    |
+| `/devlogger-modal.js` | The drop-in widget (served with cross-origin, embeddable headers) |
+
+Static assets under `public/` are served **before** Helmet with permissive,
+cross-origin headers so the widget can be loaded by modules on any origin, and so the
+docs pages' inline scripts/styles are not blocked by the API's strict CSP. Requests that
+don't match a file fall through to the authenticated API.
+
+### Using the widget in a module
+
+```html
+<!-- 1. Load once per page -->
+<script src="https://YOUR-DEVLOGGER-HOST/devlogger-modal.js"></script>
+
+<script>
+  // 2. Configure once at startup
+  DevLoggerModal.init({
+    apiBaseUrl: 'https://YOUR-DEVLOGGER-HOST/api/v1',
+    token: window.LMS_TOKEN, // the logged-in LMS token
+    appName: 'Nama Modul Anda',
+  });
+
+  // 3. Show it whenever something fails
+  try {
+    // ...
+  } catch (err) {
+    DevLoggerModal.showError({
+      title: 'Gagal Menyimpan Data',
+      message: 'Data belum tersimpan. Silakan coba lagi atau laporkan ke IT.',
+      error: {
+        url: '/api/orders',
+        method: 'POST',
+        status_code: err.status,
+        error_message: err.message,
+        error_stack: err.stack,
+      },
+    });
+  }
+</script>
+```
+
+The modal shows two buttons: **"Mengerti"** closes it, and **"Laporkan ke IT"** posts the
+full error context to `POST /api/v1/errors/report` (saving it to `logging_mike` and
+emailing IT), then confirms with the returned reference number. Full option reference is on
+the docs page at `/`.

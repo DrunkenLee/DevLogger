@@ -1,3 +1,5 @@
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -13,6 +15,26 @@ import errorHandler from './middlewares/errorHandler.js';
 import { globalLimiter } from './middlewares/rateLimiters.js';
 
 const app = express();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.join(__dirname, '..', 'public');
+
+// Static assets (docs pages + the embeddable devlogger-modal.js widget) are
+// served BEFORE helmet so they keep permissive, cross-origin-embeddable headers
+// and the docs' inline scripts/styles are not blocked by the API's strict CSP.
+// Requests that don't match a file fall through to the hardened API below.
+app.use(
+  express.static(publicDir, {
+    setHeaders: (res, filePath) => {
+      // Allow other internal modules on any origin to load the widget.
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+      }
+    },
+  })
+);
 
 app.use(helmet());
 app.use(cors());

@@ -1,0 +1,805 @@
+<title>DevLogger — Reusable Error Modal for Internal Modules</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta
+  name="description"
+  content="Drop-in error modal that reports failures to IT — saved to MSSQL and emailed automatically. One script tag, any framework."
+/>
+<link rel="stylesheet" href="/assets/site.css" />
+
+<div class="ambient" aria-hidden="true">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true"
+        ><svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+          <path
+            d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.4 0z"
+          /></svg
+      ></span>
+      DevLogger
+      <span class="tag">v1.0</span>
+    </a>
+    <div class="nav-links">
+      <a href="#quickstart">Quickstart</a>
+      <a href="#demo">Live Demo</a>
+      <a href="#config">Config</a>
+      <a href="#api">API</a>
+      <a href="/workflow.html">Workflow</a>
+      <a
+        class="nav-cta btn btn-primary"
+        style="padding: 8px 16px; font-size: 13.5px"
+        href="#quickstart"
+        >Get the snippet</a
+      >
+    </div>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero wrap">
+  <div class="reveal">
+    <span class="eyebrow"
+      ><span class="dot"></span> One script tag · any framework · zero
+      dependencies</span
+    >
+    <h1>
+      Ship errors to IT with<br /><span class="grad">one reusable modal</span>
+    </h1>
+    <p class="lead">
+      DevLogger gives every internal module the same polished error dialog.
+      Users see a friendly message with <strong>“Mengerti”</strong> to dismiss
+      and <strong>“Laporkan ke IT”</strong> to report — which saves the full
+      error to MSSQL and emails your team automatically.
+    </p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#quickstart">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+        </svg>
+        Copy the snippet
+      </a>
+      <button class="btn btn-danger" id="hero-demo" type="button">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4" />
+          <path d="M12 8h.01" />
+        </svg>
+        Try the modal now
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== VALUE CARDS ===================== -->
+<section class="block wrap">
+  <div class="grid cols-3">
+    <div class="card reveal">
+      <div class="ic">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="4" />
+          <path d="M3 9h18M9 21V9" />
+        </svg>
+      </div>
+      <h3>Consistent everywhere</h3>
+      <p>
+        The same accessible dialog in every module — Vue, React, jQuery or plain
+        HTML. Users learn it once.
+      </p>
+    </div>
+    <div class="card reveal">
+      <div class="ic">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="m22 2-7 20-4-9-9-4 20-7z" />
+        </svg>
+      </div>
+      <h3>Reports in one click</h3>
+      <p>
+        “Laporkan ke IT” posts the full context — stack, URL, status, user — to
+        <code class="inline">/errors/report</code>, saved &amp; emailed.
+      </p>
+    </div>
+    <div class="card reveal">
+      <div class="ic">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      </div>
+      <h3>Nothing to build</h3>
+      <p>
+        No backend work per app. The DevLogger server already persists to
+        <code class="inline">logging_mike</code> and sends the alert.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== QUICKSTART ===================== -->
+<section class="block wrap" id="quickstart">
+  <div class="section-head reveal">
+    <div class="kicker">Quickstart</div>
+    <h2>Three steps to wire it in</h2>
+    <p>
+      Recommended distribution: load the single hosted file and configure it
+      once. No build step, no npm install.
+    </p>
+  </div>
+
+  <div class="steps">
+    <div class="step reveal">
+      <h3>Load the widget once per page</h3>
+      <p>
+        Point at the DevLogger host that serves this page. It injects its own
+        styles — nothing else to import.
+      </p>
+      <div class="code">
+        <div class="code-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">index.html</span>
+          <button class="copy-btn" data-target="#snip-load">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+            ><span class="copy-label">Salin</span>
+          </button>
+        </div>
+        <pre class="code-body" id="snip-load">
+&lt;!-- Load once, anywhere before you use it --&gt;
+&lt;script src="https://YOUR-DEVLOGGER-HOST/devlogger-modal.js"&gt;&lt;/script&gt;</pre>
+      </div>
+    </div>
+
+    <div class="step reveal">
+      <h3>Configure it once at startup</h3>
+      <p>
+        Give it the API base URL and the logged-in user’s LMS token so reports
+        can authenticate.
+      </p>
+      <div class="code">
+        <div class="code-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">app.init.js</span>
+          <button class="copy-btn" data-target="#snip-init">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+            ><span class="copy-label">Salin</span>
+          </button>
+        </div>
+        <pre class="code-body" id="snip-init">
+DevLoggerModal.init({
+  apiBaseUrl: "https://YOUR-DEVLOGGER-HOST/api/v1",
+  token: window.LMS_TOKEN,      // the logged-in LMS token
+  appName: "Nama Modul Anda",   // shown to IT in the report
+  userId: currentUser.log_NIK   // optional, helps IT trace it
+});</pre>
+      </div>
+    </div>
+
+    <div class="step reveal">
+      <h3>Show it whenever something fails</h3>
+      <p>
+        Pass a friendly <code class="inline">message</code> for the user and the
+        raw <code class="inline">error</code> context for IT.
+      </p>
+      <div class="code">
+        <div class="code-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">orders.js</span>
+          <button class="copy-btn" data-target="#snip-use">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+            ><span class="copy-label">Salin</span>
+          </button>
+        </div>
+        <pre class="code-body" id="snip-use">
+try {
+  await saveOrder(payload);
+} catch (err) {
+  DevLoggerModal.showError({
+    title: "Gagal Menyimpan Data",
+    message: "Data belum tersimpan. Silakan coba lagi atau laporkan ke IT.",
+    error: {
+      url: "/api/orders",
+      method: "POST",
+      status_code: err.status,
+      error_message: err.message,
+      error_stack: err.stack,
+      request_body: payload
+    }
+  });
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout reveal" style="margin-top: 20px">
+    <strong>That’s the whole integration.</strong> The user clicks
+    <em>Laporkan ke IT</em>, the modal POSTs to
+    <code class="inline">/api/v1/errors/report</code>, and DevLogger saves the
+    row + emails the team. No per-app backend code.
+  </div>
+</section>
+
+<!-- ===================== LIVE DEMO ===================== -->
+<section class="block wrap" id="demo">
+  <div class="section-head reveal">
+    <div class="kicker">Live demo</div>
+    <h2>Try it against this server</h2>
+    <p>
+      This page loads the real widget. Fill in a token to send a genuine report,
+      or just open the modal to see the UX.
+    </p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="demo reveal">
+      <div class="field">
+        <label for="d-api">API base URL</label>
+        <input id="d-api" type="text" value="/api/v1" />
+        <p class="hint">
+          Same-origin default. Reporting hits
+          <code class="inline">POST {base}/errors/report</code>.
+        </p>
+      </div>
+      <div class="field">
+        <label for="d-token">LMS token (optional for the demo)</label>
+        <input
+          id="d-token"
+          type="text"
+          placeholder="paste a valid LMS token to actually email IT"
+        />
+        <p class="hint">
+          Leave blank to see the graceful auth-error state instead of a real
+          send.
+        </p>
+      </div>
+      <div class="field">
+        <label for="d-msg">User-facing message</label>
+        <input id="d-msg" type="text" value="Gagal memuat data pesanan." />
+      </div>
+      <button
+        class="btn btn-danger"
+        id="d-open"
+        type="button"
+        style="width: 100%"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+          <path
+            d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.4 0z"
+          />
+        </svg>
+        Trigger the error modal
+      </button>
+    </div>
+
+    <div class="card reveal">
+      <h3 style="margin-top: 0">What happens</h3>
+      <p style="margin-bottom: 14px">
+        The modal opens with two buttons. <strong>Mengerti</strong> simply
+        closes it. <strong>Laporkan ke IT</strong>
+        shows a spinner, posts the full context, then confirms with a reference
+        number returned by the server.
+      </p>
+      <p style="color: var(--faint); font-size: 13.5px; margin: 0">
+        Expand <em>“Detail teknis”</em> inside the modal to see exactly what
+        gets sent to IT.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FRAMEWORK EXAMPLES ===================== -->
+<section class="block wrap">
+  <div class="section-head reveal">
+    <div class="kicker">Framework recipes</div>
+    <h2>Drops into whatever you already run</h2>
+  </div>
+  <div class="grid cols-2">
+    <div class="reveal">
+      <div class="code">
+        <div class="code-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">React / Vite</span>
+          <button class="copy-btn" data-target="#snip-react">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+            ><span class="copy-label">Salin</span>
+          </button>
+        </div>
+        <pre class="code-body" id="snip-react">
+// once, e.g. in App.tsx
+useEffect(() =&gt; {
+  DevLoggerModal.init({
+    apiBaseUrl: import.meta.env.VITE_DEVLOGGER + "/api/v1",
+    token: getLmsToken(),
+    appName: "Sales Dashboard"
+  });
+}, []);
+
+// anywhere a call fails
+catch (err) {
+  DevLoggerModal.showError({
+    message: "Gagal memuat laporan.",
+    error: { url: "/api/reports", error_message: err.message }
+  });
+}</pre>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="code">
+        <div class="code-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">axios — global interceptor</span>
+          <button class="copy-btn" data-target="#snip-axios">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+            ><span class="copy-label">Salin</span>
+          </button>
+        </div>
+        <pre class="code-body" id="snip-axios">
+// catch every failed request in one place
+axios.interceptors.response.use(null, (error) =&gt; {
+  const res = error.response;
+  DevLoggerModal.showError({
+    message: "Permintaan ke server gagal.",
+    error: {
+      url: error.config?.url,
+      method: (error.config?.method || "GET").toUpperCase(),
+      status_code: res?.status,
+      error_message: error.message,
+      request_body: error.config?.data
+    }
+  });
+  return Promise.reject(error);
+});</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONFIG ===================== -->
+<section class="block wrap" id="config">
+  <div class="section-head reveal">
+    <div class="kicker">Configuration</div>
+    <h2><code class="inline">DevLoggerModal.init(options)</code></h2>
+    <p>
+      Set these once. Every later
+      <code class="inline">showError()</code> inherits them.
+    </p>
+  </div>
+  <div class="table-wrap reveal">
+    <table>
+      <thead>
+        <tr>
+          <th>Option</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <code>apiBaseUrl</code>
+            <span class="badge req">required to report</span>
+          </td>
+          <td>string</td>
+          <td><code>""</code></td>
+          <td>
+            Base URL of the DevLogger API, e.g.
+            <code>https://host/api/v1</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><code>token</code></td>
+          <td>string</td>
+          <td><code>""</code></td>
+          <td>
+            LMS auth token; sent as both <code>authentication</code> and
+            <code>Authorization: Bearer</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><code>getToken</code></td>
+          <td>function</td>
+          <td><code>null</code></td>
+          <td>
+            Called at report time to fetch a fresh token. Overrides
+            <code>token</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><code>appName</code></td>
+          <td>string</td>
+          <td><code>""</code></td>
+          <td>Your module name — included in the notes IT receives.</td>
+        </tr>
+        <tr>
+          <td><code>userId</code></td>
+          <td>string</td>
+          <td><code>""</code></td>
+          <td>Current user’s NIK/id, attached to the report.</td>
+        </tr>
+        <tr>
+          <td><code>recipients</code></td>
+          <td>string[]</td>
+          <td><code>null</code></td>
+          <td>
+            Override the email recipients (<code>to</code>). Defaults to the
+            server’s IT list.
+          </td>
+        </tr>
+        <tr>
+          <td><code>saveToDb</code></td>
+          <td>boolean</td>
+          <td><code>true</code></td>
+          <td>
+            Persist the row to <code>logging_mike</code> as well as emailing.
+          </td>
+        </tr>
+        <tr>
+          <td><code>autoContext</code></td>
+          <td>boolean</td>
+          <td><code>true</code></td>
+          <td>
+            Auto-fill <code>url</code>/<code>method</code> from the browser when
+            omitted.
+          </td>
+        </tr>
+        <tr>
+          <td><code>onReport</code></td>
+          <td>function</td>
+          <td><code>null</code></td>
+          <td>Callback with the API response after a successful report.</td>
+        </tr>
+        <tr>
+          <td><code>onReportError</code></td>
+          <td>function</td>
+          <td><code>null</code></td>
+          <td>Callback with the error if a report fails.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-head reveal" style="margin-top: 38px">
+    <h2 style="font-size: 22px">
+      <code class="inline">DevLoggerModal.showError(options)</code>
+    </h2>
+  </div>
+  <div class="table-wrap reveal">
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>title</code></td>
+          <td>string</td>
+          <td>Modal heading. Default <code>"Terjadi Kesalahan"</code>.</td>
+        </tr>
+        <tr>
+          <td><code>message</code></td>
+          <td>string</td>
+          <td>Friendly, user-facing explanation.</td>
+        </tr>
+        <tr>
+          <td><code>error</code></td>
+          <td>object</td>
+          <td>Technical context sent to IT — see below.</td>
+        </tr>
+        <tr>
+          <td><code>error.url</code></td>
+          <td>string</td>
+          <td>
+            Endpoint or route that failed.
+            <span class="badge req">required*</span>
+          </td>
+        </tr>
+        <tr>
+          <td><code>error.error_message</code></td>
+          <td>string</td>
+          <td>
+            The raw error message. <span class="badge req">required*</span>
+          </td>
+        </tr>
+        <tr>
+          <td><code>error.method / status_code / error_stack</code></td>
+          <td>—</td>
+          <td>HTTP method, status, and stack trace.</td>
+        </tr>
+        <tr>
+          <td><code>error.request_body / headers / userid</code></td>
+          <td>—</td>
+          <td>Extra context saved with the row.</td>
+        </tr>
+        <tr>
+          <td><code>onClose</code></td>
+          <td>function</td>
+          <td>Called when the modal closes.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="color: var(--faint); font-size: 13px; margin-top: 10px">
+    * If omitted, <code class="inline">autoContext</code> fills
+    <code class="inline">url</code>/<code class="inline">method</code> from the
+    browser and falls back to <code class="inline">message</code> for the error
+    text.
+  </p>
+</section>
+
+<!-- ===================== API ===================== -->
+<section class="block wrap" id="api">
+  <div class="section-head reveal">
+    <div class="kicker">Server API</div>
+    <h2>The endpoint behind the button</h2>
+    <p>
+      The modal’s report button calls this. You can also call it directly from
+      any backend.
+    </p>
+  </div>
+
+  <div class="card reveal" style="margin-bottom: 18px">
+    <p style="margin: 0 0 6px">
+      <span class="badge post">POST</span> &nbsp;<code class="inline"
+        >/api/v1/errors/report</code
+      >
+    </p>
+    <p style="margin: 0; color: var(--muted); font-size: 14px">
+      Saves the error to <code class="inline">logging_mike</code> (when
+      <code class="inline">save_to_db</code>) and emails the IT recipients. Auth
+      required · rate-limited 10 req / 15 min per IP.
+    </p>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="reveal">
+      <div class="code">
+        <div class="code-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">request.json</span>
+          <button class="copy-btn" data-target="#snip-req">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+            ><span class="copy-label">Salin</span>
+          </button>
+        </div>
+        <pre class="code-body" id="snip-req">
+{
+  "method": "POST",
+  "url": "/api/orders",
+  "status_code": 500,
+  "error_message": "Timeout saving order",
+  "error_stack": "Error: Timeout...\n  at save()",
+  "request_body": { "orderId": 42 },
+  "userid": "12345",
+  "notes": "App: Sales Dashboard",
+  "save_to_db": true
+}</pre>
+      </div>
+    </div>
+    <div class="reveal">
+      <div class="code">
+        <div class="code-head">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="fname">200 response.json</span>
+          <button class="copy-btn" data-target="#snip-res">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+            ><span class="copy-label">Salin</span>
+          </button>
+        </div>
+        <pre class="code-body" id="snip-res">
+{
+  "success": true,
+  "message": "Error reported and alert sent",
+  "data": {
+    "messageId": "&lt;...@lapilabs&gt;",
+    "recipients": ["ITnotifLMS@lapilabs.co.id"],
+    "saved_to_db": true,
+    "id": 1284
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn reveal" style="margin-top: 20px">
+    <strong>Headers.</strong> Send the LMS token as
+    <code class="inline">authentication: &lt;token&gt;</code> or
+    <code class="inline">Authorization: Bearer &lt;token&gt;</code>. The widget
+    sets both for you when you provide <code class="inline">token</code>.
+  </div>
+</section>
+
+<!-- ===================== CTA ===================== -->
+<section class="block wrap">
+  <div
+    class="card reveal"
+    style="
+      text-align: center;
+      padding: 44px 26px;
+      background: linear-gradient(
+        135deg,
+        rgba(91, 140, 255, 0.12),
+        rgba(124, 92, 255, 0.1)
+      );
+      border-color: rgba(91, 140, 255, 0.35);
+    "
+  >
+    <h2 style="margin: 0 0 12px; font-size: 26px">
+      Understand the full picture
+    </h2>
+    <p style="color: var(--muted); max-width: 520px; margin: 0 auto 22px">
+      See how a single click travels from a user’s screen all the way to your
+      inbox — and why that saves the team hours.
+    </p>
+    <a class="btn btn-primary" href="/workflow.html">
+      Read the workflow
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M5 12h14M13 6l6 6-6 6" />
+      </svg>
+    </a>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>DevLogger · internal error reporting for company modules</span>
+    <span
+      ><a href="/workflow.html">Workflow</a> &nbsp;·&nbsp;
+      <a href="/devlogger-modal.js">devlogger-modal.js</a> &nbsp;·&nbsp;
+      <a href="/health">/health</a></span
+    >
+  </div>
+</footer>
+
+<!-- The real widget + demo wiring -->
+<script src="/devlogger-modal.js"></script>
+<script src="/assets/site.js"></script>
+<script>
+  (function () {
+    function apply() {
+      var api = (document.getElementById('d-api') || {}).value || '/api/v1';
+      var token = (document.getElementById('d-token') || {}).value || '';
+      DevLoggerModal.init({
+        apiBaseUrl: api,
+        token: token,
+        appName: 'DevLogger Docs Demo',
+      });
+    }
+    function openDemo(msg) {
+      apply();
+      DevLoggerModal.showError({
+        title: 'Terjadi Kesalahan',
+        message: msg || 'Gagal memuat data pesanan.',
+        error: {
+          url: '/api/orders',
+          method: 'POST',
+          status_code: 500,
+          error_message:
+            'Demo error: request timed out while saving the order.',
+          error_stack:
+            'Error: request timed out\n  at saveOrder (orders.js:42)\n  at onSubmit (form.js:11)',
+          request_body: { orderId: 42, items: 3 },
+        },
+      });
+    }
+    var heroBtn = document.getElementById('hero-demo');
+    if (heroBtn)
+      heroBtn.addEventListener('click', function () {
+        openDemo();
+      });
+    var dOpen = document.getElementById('d-open');
+    if (dOpen)
+      dOpen.addEventListener('click', function () {
+        openDemo((document.getElementById('d-msg') || {}).value);
+      });
+  })();
+</script>

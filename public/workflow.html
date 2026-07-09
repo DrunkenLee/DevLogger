@@ -1,0 +1,523 @@
+<title>DevLogger — Workflow &amp; Why It Helps</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta
+  name="description"
+  content="How an error travels from a user's screen to IT's inbox with DevLogger, and why it saves developers hours."
+/>
+<link rel="stylesheet" href="/assets/site.css" />
+
+<style>
+  /* Page-specific: the end-to-end flow diagram */
+  .flow {
+    display: grid;
+    gap: 0;
+    margin-top: 8px;
+  }
+  .flow-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 20px;
+    padding: 0 0 34px;
+  }
+  .flow-step:last-child {
+    padding-bottom: 0;
+  }
+  .flow-node {
+    width: 56px;
+    height: 56px;
+    border-radius: 15px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, var(--brand), var(--brand-2));
+    box-shadow: 0 10px 26px -10px rgba(91, 140, 255, 0.9);
+    z-index: 1;
+  }
+  .flow-node svg {
+    width: 26px;
+    height: 26px;
+    color: #fff;
+  }
+  .flow-step:nth-child(3) .flow-node {
+    background: linear-gradient(135deg, #ff8f6f, var(--danger));
+    box-shadow: 0 10px 26px -10px rgba(255, 107, 111, 0.8);
+  }
+  .flow-step:nth-child(4) .flow-node {
+    background: linear-gradient(135deg, var(--brand-2), #b06cff);
+  }
+  .flow-step:nth-child(5) .flow-node {
+    background: linear-gradient(135deg, var(--ok), #4fe0bd);
+    box-shadow: 0 10px 26px -10px rgba(53, 208, 165, 0.8);
+  }
+  .flow-step:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 27px;
+    top: 56px;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(var(--brand), transparent);
+    opacity: 0.5;
+  }
+  .flow-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+  }
+  .flow-card h3 {
+    margin: 0 0 6px;
+    font-size: 17px;
+  }
+  .flow-card .who {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 8px;
+    display: block;
+  }
+  .flow-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+  .flow-card code {
+    font-family: var(--mono);
+    color: var(--brand);
+    font-size: 12.5px;
+  }
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .pain {
+    border-left: 3px solid var(--danger);
+    background: rgba(255, 107, 111, 0.06);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+  }
+  .gain {
+    border-left: 3px solid var(--ok);
+    background: rgba(53, 208, 165, 0.06);
+    border-radius: 0 12px 12px 0;
+    padding: 16px 20px;
+  }
+  .pain h4,
+  .gain h4 {
+    margin: 0 0 8px;
+    font-size: 14px;
+  }
+  .pain ul,
+  .gain ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .pain li,
+  .gain li {
+    margin-bottom: 5px;
+  }
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .stat {
+    text-align: center;
+    padding: 26px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+  }
+  .stat .n {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(120deg, var(--brand), var(--ok));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .stat .l {
+    color: var(--muted);
+    font-size: 13.5px;
+    margin-top: 4px;
+  }
+  @media (max-width: 720px) {
+    .split,
+    .stat-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="ambient" aria-hidden="true">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="/">
+      <span class="logo" aria-hidden="true"
+        ><svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+          <path
+            d="M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.4 0z"
+          /></svg
+      ></span>
+      DevLogger
+      <span class="tag">Workflow</span>
+    </a>
+    <div class="nav-links">
+      <a href="/#quickstart">Quickstart</a>
+      <a href="/#demo">Live Demo</a>
+      <a href="/#api">API</a>
+      <a href="#flow">The Flow</a>
+      <a
+        class="nav-cta btn btn-primary"
+        style="padding: 8px 16px; font-size: 13.5px"
+        href="/"
+        >← Docs</a
+      >
+    </div>
+  </div>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero wrap">
+  <div class="reveal">
+    <span class="eyebrow"
+      ><span class="dot"></span> End-to-end · one click to inbox</span
+    >
+    <h1>
+      From a broken screen to<br /><span class="grad"
+        >IT’s inbox in seconds</span
+      >
+    </h1>
+    <p class="lead">
+      DevLogger centralises error reporting so no team reinvents it. Here’s
+      exactly how a failure flows through the system — and where it quietly
+      saves your developers real time.
+    </p>
+  </div>
+</header>
+
+<!-- ===================== THE FLOW ===================== -->
+<section class="block wrap" id="flow">
+  <div class="section-head reveal">
+    <div class="kicker">The journey</div>
+    <h2>What happens on one click</h2>
+    <p>Five stages, most of which your team never has to build or maintain.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step reveal">
+      <div class="flow-node">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="M3 3v18h18" />
+          <path d="m7 14 4-4 3 3 5-6" />
+        </svg>
+      </div>
+      <div class="flow-card">
+        <span class="who">Any internal module</span>
+        <h3>Something fails</h3>
+        <p>
+          An API call times out, a save returns 500, a page can’t load. The
+          module catches it and calls
+          <code>DevLoggerModal.showError()</code> with a friendly message and
+          the raw context.
+        </p>
+      </div>
+    </div>
+
+    <div class="flow-step reveal">
+      <div class="flow-node">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <rect x="3" y="4" width="18" height="14" rx="2" />
+          <path d="M8 20h8M12 18v2" />
+        </svg>
+      </div>
+      <div class="flow-card">
+        <span class="who">The user</span>
+        <h3>Sees one clear modal</h3>
+        <p>
+          A calm dialog appears: a plain-language message,
+          <strong>“Mengerti”</strong> to dismiss, and
+          <strong>“Laporkan ke IT”</strong> to report. No stack traces shouted
+          at the user — those hide under “Detail teknis”.
+        </p>
+      </div>
+    </div>
+
+    <div class="flow-step reveal">
+      <div class="flow-node">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <path d="m22 2-7 20-4-9-9-4 20-7z" />
+        </svg>
+      </div>
+      <div class="flow-card">
+        <span class="who">The widget</span>
+        <h3>Posts the full context</h3>
+        <p>
+          On <em>Laporkan ke IT</em>, the widget sends everything — URL, method,
+          status, stack, request body, user — to
+          <code>POST /api/v1/errors/report</code>, authenticated with the user’s
+          LMS token.
+        </p>
+      </div>
+    </div>
+
+    <div class="flow-step reveal">
+      <div class="flow-node">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 5v14a9 3 0 0 0 18 0V5" />
+          <path d="M3 12a9 3 0 0 0 18 0" />
+        </svg>
+      </div>
+      <div class="flow-card">
+        <span class="who">DevLogger server</span>
+        <h3>Saves &amp; emails automatically</h3>
+        <p>
+          The server persists a row to MSSQL <code>logging_mike</code> and sends
+          a full-context alert email to the IT recipients via Nodemailer — both
+          in a single request.
+        </p>
+      </div>
+    </div>
+
+    <div class="flow-step reveal">
+      <div class="flow-node">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m2 7 10 6 10-6" />
+        </svg>
+      </div>
+      <div class="flow-card">
+        <span class="who">IT / developers</span>
+        <h3>Get everything to reproduce it</h3>
+        <p>
+          The team receives a reference number and an email with the exact
+          endpoint, status, stack, and payload — no back-and-forth screenshots.
+          The user sees a “terkirim” confirmation.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BEFORE / AFTER ===================== -->
+<section class="block wrap">
+  <div class="section-head reveal">
+    <div class="kicker">Why it helps</div>
+    <h2>The developer time it quietly buys back</h2>
+  </div>
+  <div class="split reveal">
+    <div class="pain">
+      <h4>😖 Without DevLogger</h4>
+      <ul>
+        <li>Every module rolls its own error dialog and logging.</li>
+        <li>Bug reports arrive as “it’s broken” with a blurry screenshot.</li>
+        <li>Devs guess the endpoint, status, and payload.</li>
+        <li>Errors live in scattered logs — or nowhere at all.</li>
+        <li>No consistent UX; users don’t know how to report.</li>
+      </ul>
+    </div>
+    <div class="gain">
+      <h4>✅ With DevLogger</h4>
+      <ul>
+        <li>One shared widget — nothing to rebuild per app.</li>
+        <li>Reports carry the full stack, URL, status &amp; payload.</li>
+        <li>
+          Every error is saved to
+          <code style="color: var(--ok)">logging_mike</code> and searchable.
+        </li>
+        <li>IT is emailed instantly with a reference number.</li>
+        <li>Identical, friendly UX in every module.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STATS ===================== -->
+<section class="block wrap">
+  <div class="stat-row reveal">
+    <div class="stat">
+      <div class="n">1</div>
+      <div class="l">script tag to integrate</div>
+    </div>
+    <div class="stat">
+      <div class="n">0</div>
+      <div class="l">per-app backend code</div>
+    </div>
+    <div class="stat">
+      <div class="n">2</div>
+      <div class="l">clicks from error to reported</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ARCHITECTURE ===================== -->
+<section class="block wrap">
+  <div class="section-head reveal">
+    <div class="kicker">Under the hood</div>
+    <h2>What the server already handles for you</h2>
+  </div>
+  <div class="grid cols-3">
+    <div class="card reveal">
+      <div class="ic">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+      </div>
+      <h3>Auth &amp; rate limiting</h3>
+      <p>
+        LMS-token auth on every route plus a stricter 10 req / 15 min limit on
+        the report and email endpoints.
+      </p>
+    </div>
+    <div class="card reveal">
+      <div class="ic">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M3 5v14a9 3 0 0 0 18 0V5" />
+        </svg>
+      </div>
+      <h3>MSSQL persistence</h3>
+      <p>
+        Structured rows in
+        <code style="color: var(--brand)">logging_mike</code> — queryable by
+        status, date, and free-text search.
+      </p>
+    </div>
+    <div class="card reveal">
+      <div class="ic">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m2 7 10 6 10-6" />
+        </svg>
+      </div>
+      <h3>Alert emails</h3>
+      <p>
+        Nodemailer sends a full-context HTML alert to the IT list — with
+        graceful fallback when SMTP is down.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CTA ===================== -->
+<section class="block wrap">
+  <div
+    class="card reveal"
+    style="
+      text-align: center;
+      padding: 44px 26px;
+      background: linear-gradient(
+        135deg,
+        rgba(53, 208, 165, 0.12),
+        rgba(91, 140, 255, 0.1)
+      );
+      border-color: rgba(53, 208, 165, 0.35);
+    "
+  >
+    <h2 style="margin: 0 0 12px; font-size: 26px">
+      Ready to wire it into your module?
+    </h2>
+    <p style="color: var(--muted); max-width: 520px; margin: 0 auto 22px">
+      Grab the snippet, drop in one script tag, and your app reports errors like
+      every other module.
+    </p>
+    <a class="btn btn-primary" href="/#quickstart">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      >
+        <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />
+      </svg>
+      Get the snippet
+    </a>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <span>DevLogger · internal error reporting for company modules</span>
+    <span
+      ><a href="/">Docs</a> &nbsp;·&nbsp;
+      <a href="/devlogger-modal.js">devlogger-modal.js</a> &nbsp;·&nbsp;
+      <a href="/health">/health</a></span
+    >
+  </div>
+</footer>
+
+<script src="/assets/site.js"></script>
