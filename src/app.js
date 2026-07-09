@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 
 import config from './config/index.js';
 import routes from './routes/index.js';
+import healthRoutes from './routes/healthRoutes.js';
 import requestLogger from './middlewares/requestLogger.js';
 import notFound from './middlewares/notFound.js';
 import errorHandler from './middlewares/errorHandler.js';
@@ -33,6 +34,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(limiter);
 app.use(requestLogger);
+
+// Root-level health check for IIS/PM2 reverse proxy (http://localhost:PORT/health)
+app.use('/health', healthRoutes);
 
 app.use(`/api/${config.apiVersion}`, routes);
 
