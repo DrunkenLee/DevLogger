@@ -2,13 +2,48 @@
   "info": {
     "_postman_id": "devlogger-collection-001",
     "name": "DevLogger API",
-    "description": "Complete Postman collection for the DevLogger Node.js backend. Covers health checks, in-memory logs, MSSQL error logs, and the fallback error-report endpoint.",
+    "description": "Complete Postman collection for the DevLogger Node.js backend. Covers health checks (root + versioned), in-memory logs, MSSQL error logs, and the fallback error-report endpoint.\n\nAuth: all `/api/v1/*` routes (except health) require a valid LMS token, sent either as the `authentication` header or `Authorization: Bearer <token>`; the server validates it against the LMS decode endpoint. The root `/health` and `/api/v1/health` routes are public.\n\nRate limiting: a global limiter allows 100 requests / 15 min per IP; the email endpoints (`POST /errors/:id/email` and `POST /errors/report`) are limited to 10 requests / 15 min per IP and return 429 when exceeded.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
       "name": "Health",
       "item": [
+        {
+          "name": "Root Health Check (proxy)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{rootUrl}}/health",
+              "host": ["{{rootUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Root-level health check exposed for the IIS/PM2 reverse proxy at `/health` (no `/api/v1` prefix, no auth). Returns service status, uptime, timestamp and version."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test('Response has success shape', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data).to.have.property('status');",
+                  "    pm.expect(jsonData.data).to.have.property('uptime');",
+                  "    pm.expect(jsonData.data).to.have.property('timestamp');",
+                  "    pm.expect(jsonData.data).to.have.property('version');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
         {
           "name": "Health Check",
           "request": {
@@ -19,7 +54,7 @@
               "host": ["{{baseUrl}}"],
               "path": ["health"]
             },
-            "description": "Returns service status, uptime, timestamp and version."
+            "description": "Versioned health check at `/api/v1/health`. Public (auth is skipped for the health route). Returns service status, uptime, timestamp and version."
           },
           "response": [],
           "event": [
@@ -664,6 +699,9 @@
           "if (!pm.environment.get('baseUrl')) {",
           "    pm.environment.set('baseUrl', 'http://localhost:3000/api/v1');",
           "}",
+          "if (!pm.environment.get('rootUrl')) {",
+          "    pm.environment.set('rootUrl', 'http://localhost:3000');",
+          "}",
           "if (!pm.environment.get('errorId')) {",
           "    pm.environment.set('errorId', '6862');",
           "}"
@@ -675,6 +713,11 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:3000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "rootUrl",
+      "value": "http://localhost:3000",
       "type": "string"
     },
     {
