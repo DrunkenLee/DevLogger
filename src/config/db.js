@@ -30,7 +30,8 @@ export const connectDB = async (devmode = false) => {
   }
 
   try {
-    pools[mode] = await sql.connect(buildConfig(devmode));
+    const pool = new sql.ConnectionPool(buildConfig(devmode));
+    pools[mode] = await pool.connect();
     logger.info(`Database connection pool created for ${mode}`);
     return pools[mode];
   } catch (error) {

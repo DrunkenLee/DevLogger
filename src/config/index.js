@@ -2,7 +2,13 @@ import dotenv from 'dotenv';
 
 dotenv.config({ override: true });
 
-const requiredEnv = [];
+const requiredEnv = [
+  'MS_SQL_DB_SERVER',
+  'MS_SQL_DB_NAME',
+  'MS_SQL_DB_USER',
+  'MS_SQL_DB_PWD',
+  'MS_SQL_DEV_DB_SERVER',
+];
 
 for (const key of requiredEnv) {
   if (!process.env[key]) {
@@ -27,8 +33,7 @@ export const config = {
       port: Number(process.env.MS_SQL_DB_PORT) || 1433,
     },
     dev: {
-      server:
-        process.env.MS_SQL_DEV_DB_SERVER || process.env.MS_SQL_DB_SERVER || '',
+      server: process.env.MS_SQL_DEV_DB_SERVER || '',
       database:
         process.env.MS_SQL_DEV_DB_NAME || process.env.MS_SQL_DB_NAME || '',
       user: process.env.MS_SQL_DEV_DB_USER || process.env.MS_SQL_DB_USER || '',
@@ -53,5 +58,26 @@ export const config = {
       : ['ITnotifLMS@lapilabs.co.id', 'michael@mikelabs.cloud'],
   },
 };
+
+/**
+ * Returns a safe summary of the resolved configuration for startup logging.
+ * Passwords and other secrets are intentionally omitted.
+ */
+export const getConfigSummary = () => ({
+  nodeEnv: config.nodeEnv,
+  port: config.port,
+  db: {
+    prod: {
+      server: config.db.prod.server,
+      database: config.db.prod.database,
+      port: config.db.prod.port,
+    },
+    dev: {
+      server: config.db.dev.server,
+      database: config.db.dev.database,
+      port: config.db.dev.port,
+    },
+  },
+});
 
 export default config;
