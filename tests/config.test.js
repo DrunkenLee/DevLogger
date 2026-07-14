@@ -7,6 +7,12 @@ describe('Application configuration', () => {
     expect(config.db.prod.server).not.toEqual(config.db.dev.server);
   });
 
+  test('live and dev LMS decode URLs are different', () => {
+    expect(config.lmsDecodeUrl).toBeTruthy();
+    expect(config.lmsDevDecodeUrl).toBeTruthy();
+    expect(config.lmsDecodeUrl).not.toEqual(config.lmsDevDecodeUrl);
+  });
+
   test('config summary exposes servers but omits passwords', () => {
     const summary = getConfigSummary();
 

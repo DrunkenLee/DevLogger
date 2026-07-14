@@ -23,7 +23,10 @@ export const config = {
   apiVersion: 'v1',
   version: process.env.npm_package_version || '1.0.0',
   lmsDecodeUrl:
-    process.env.LMS_DECODE_URL || 'http://192.168.1.38/api/lms-dev/v1/decode',
+    process.env.LMS_DECODE_URL || 'http://192.168.1.24/api/lms/v1/decode',
+  lmsDevDecodeUrl:
+    process.env.LMS_DEV_DECODE_URL ||
+    'http://192.168.1.38/api/lms-dev/v1/decode',
   db: {
     prod: {
       server: process.env.MS_SQL_DB_SERVER || '',
@@ -66,6 +69,8 @@ export const config = {
 export const getConfigSummary = () => ({
   nodeEnv: config.nodeEnv,
   port: config.port,
+  lmsDecodeUrl: config.lmsDecodeUrl,
+  lmsDevDecodeUrl: config.lmsDevDecodeUrl,
   db: {
     prod: {
       server: config.db.prod.server,

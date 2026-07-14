@@ -109,7 +109,9 @@ DevLogger/
 
 ## Authentication
 
-All routes under `/api/v1` require authentication except `GET /api/v1/health`. The server validates the incoming token by calling the LMS decode endpoint configured in `LMS_DECODE_URL`.
+All routes under `/api/v1` require authentication except `GET /api/v1/health`. The server validates the incoming token by calling the LMS decode endpoint.
+
+By default the live endpoint `LMS_DECODE_URL` is used. When any `/api/v1/*` request includes `?devmode=true`, authentication is validated against the dev endpoint `LMS_DEV_DECODE_URL` instead.
 
 Send the token in either of these headers:
 
@@ -151,13 +153,14 @@ When a limit is exceeded the response is:
 
 ## LMS Decode Dependency
 
-Authentication relies on an external LMS decode service. The default URL is:
+Authentication relies on an external LMS decode service.
 
-```text
-http://192.168.1.38/api/lms-dev/v1/decode
-```
+| Mode              | Default URL                                 | Env variable         |
+| ----------------- | ------------------------------------------- | -------------------- |
+| Live / production | `http://192.168.1.24/api/lms/v1/decode`     | `LMS_DECODE_URL`     |
+| Dev               | `http://192.168.1.38/api/lms-dev/v1/decode` | `LMS_DEV_DECODE_URL` |
 
-Override it with the `LMS_DECODE_URL` environment variable. The service must accept a `GET` request with the token passed in the `access_token` header and return a user object containing `log_NIK`. The decode call times out after 5 seconds.
+The service must accept a `GET` request with the token passed in the `access_token` header and return a user object containing `log_NIK`. The decode call times out after 5 seconds. Append `?devmode=true` to any request to switch authentication to the dev decode endpoint.
 
 ## Environment Variables
 
@@ -166,7 +169,8 @@ Override it with the `LMS_DECODE_URL` environment variable. The service must acc
 | `NODE_ENV`             | `development`                                      | Application environment                                   |
 | `PORT`                 | `3000`                                             | Port the server listens on                                |
 | `LOG_LEVEL`            | `info`                                             | Pino log level (trace, debug, info, warn, error, fatal)   |
-| `LMS_DECODE_URL`       | `http://192.168.1.38/api/lms-dev/v1/decode`        | External LMS token decode endpoint                        |
+| `LMS_DECODE_URL`       | `http://192.168.1.24/api/lms/v1/decode`            | Live / production LMS token decode endpoint               |
+| `LMS_DEV_DECODE_URL`   | `http://192.168.1.38/api/lms-dev/v1/decode`        | Dev LMS token decode endpoint (used with `?devmode=true`) |
 | `MS_SQL_DB_SERVER`     | —                                                  | MSSQL server hostname/instance (production / default)     |
 | `MS_SQL_DB_NAME`       | —                                                  | MSSQL database name (e.g., `lapifactory`)                 |
 | `MS_SQL_DB_USER`       | —                                                  | MSSQL username                                            |
@@ -199,7 +203,7 @@ All endpoints except `GET /api/v1/health` require an authentication header.
 
 ### Error report database mode
 
-By default `POST /api/v1/errors/report` writes to the production MSSQL database configured in `MS_SQL_DB_*`. Append `?devmode=true` to write the row to the dev database configured in `MS_SQL_DEV_DB_*` instead.
+By default `POST /api/v1/errors/report` writes to the production MSSQL database configured in `MS_SQL_DB_*`. Append `?devmode=true` to write the row to the dev database configured in `MS_SQL_DEV_DB_*` instead. When `devmode=true` is used, the request is also authenticated against `LMS_DEV_DECODE_URL` rather than the live `LMS_DECODE_URL`.
 
 #### Full request body example
 

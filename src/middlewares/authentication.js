@@ -3,6 +3,19 @@ import ApiError from '../utils/ApiError.js';
 
 const AUTH_TIMEOUT_MS = 5000;
 
+const parseDevmode = (raw) => {
+  if (raw === undefined || raw === null || raw === '') {
+    return false;
+  }
+  const normalized = String(raw).toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes';
+};
+
+const getDecodeUrl = (req) => {
+  const devmode = parseDevmode(req.query.devmode);
+  return devmode ? config.lmsDevDecodeUrl : config.lmsDecodeUrl;
+};
+
 const authentication = async (req, _res, next) => {
   try {
     let token = req.headers.authentication || req.headers.authorization;
@@ -20,7 +33,7 @@ const authentication = async (req, _res, next) => {
 
     let result;
     try {
-      const response = await fetch(config.lmsDecodeUrl, {
+      const response = await fetch(getDecodeUrl(req), {
         method: 'GET',
         headers: {
           access_token: token,

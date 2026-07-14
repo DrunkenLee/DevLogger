@@ -3,6 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import authentication from '../src/middlewares/authentication.js';
 import errorHandler from '../src/middlewares/errorHandler.js';
+import config from '../src/config/index.js';
 import { loadApp } from './loadApp.js';
 
 const buildAuthApp = () => {
@@ -96,6 +97,44 @@ describe('authentication middleware', () => {
       expect.objectContaining({
         headers: { access_token: 'bearer-token' },
       })
+    );
+  });
+
+  test('uses the live decode URL by default', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      json: jest.fn().mockResolvedValue({
+        user: { log_NIK: 'TEST-003' },
+      }),
+    });
+
+    const app = buildAuthApp();
+    await request(app)
+      .get('/protected')
+      .set('authentication', 'valid-token')
+      .expect(200);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      config.lmsDecodeUrl,
+      expect.any(Object)
+    );
+  });
+
+  test('uses the dev decode URL when devmode=true', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      json: jest.fn().mockResolvedValue({
+        user: { log_NIK: 'TEST-004' },
+      }),
+    });
+
+    const app = buildAuthApp();
+    await request(app)
+      .get('/protected?devmode=true')
+      .set('authentication', 'valid-token')
+      .expect(200);
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      config.lmsDevDecodeUrl,
+      expect.any(Object)
     );
   });
 
