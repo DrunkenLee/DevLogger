@@ -71,6 +71,25 @@ describe('POST /api/v1/errors/report', () => {
     expect(queryMock).not.toHaveBeenCalled();
   });
 
+  test('routes the insert to the dev database when devmode=true', async () => {
+    const sendMailMock = jest.fn().mockResolvedValue({
+      messageId: 'report-message-id-dev',
+    });
+    const { app, queryMock } = await loadApp({
+      transporter: { sendMail: sendMailMock },
+    });
+    queryMock.mockResolvedValue([{ id: 7777 }]);
+
+    const res = await request(app)
+      .post(`${REPORT_URL}?devmode=true`)
+      .send(sampleReport)
+      .expect(200);
+
+    expect(res.body.data.id).toBe(7777);
+    expect(queryMock).toHaveBeenCalledTimes(1);
+    expect(queryMock.mock.calls[0][2]).toBe(true);
+  });
+
   test('uses custom recipients and notes', async () => {
     const sendMailMock = jest.fn().mockResolvedValue({
       messageId: 'report-message-id-3',

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "devlogger-collection-001",
     "name": "DevLogger API",
-    "description": "Complete Postman collection for the DevLogger Node.js backend. Covers health checks (root + versioned), in-memory logs, MSSQL error logs, and the fallback error-report endpoint.\n\nAuth: all `/api/v1/*` routes (except health) require a valid LMS token, sent either as the `authentication` header or `Authorization: Bearer <token>`; the server validates it against the LMS decode endpoint. The root `/health` and `/api/v1/health` routes are public.\n\nRate limiting: a global limiter allows 100 requests / 15 min per IP; the email endpoints (`POST /errors/:id/email` and `POST /errors/report`) are limited to 10 requests / 15 min per IP and return 429 when exceeded.",
+    "description": "Complete Postman collection for the DevLogger Node.js backend. Covers health checks (root + versioned), in-memory logs, MSSQL error logs, and the fallback error-report endpoint.\n\nAuth: all `/api/v1/*` routes (except health) require a valid LMS token, sent either as the `authentication` header or `Authorization: Bearer <token>`; the server validates it against the LMS decode endpoint. The root `/health` and `/api/v1/health` routes are public.\n\nDatabase mode: `POST /errors/report` accepts an optional `devmode=true` query parameter. When set, the error row is written to the dev MSSQL database (`MS_SQL_DEV_DB_*`) instead of the prod database (`MS_SQL_DB_*`).\n\nRate limiting: a global limiter allows 100 requests / 15 min per IP; the email endpoints (`POST /errors/:id/email` and `POST /errors/report`) are limited to 10 requests / 15 min per IP and return 429 when exceeded.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -562,7 +562,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"method\": \"POST\",\n  \"url\": \"http://localhost:3001/api/some-endpoint\",\n  \"status_code\": 500,\n  \"error_message\": \"Something went wrong in the fallback flow\",\n  \"error_stack\": \"Error: Something went wrong\\n    at handler (src/someEndpoint.js:42:10)\",\n  \"request_body\": {\n    \"field\": \"value\"\n  },\n  \"headers\": {\n    \"content-type\": \"application/json\",\n    \"user-agent\": \"PostmanRuntime/7.36\"\n  },\n  \"userid\": \"POSTMAN_USER\",\n  \"delegatedto\": \"POSTMAN_USER\",\n  \"auth_token\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\",\n  \"notes\": \"This error was reported through the fallback API.\"\n}"
+              "raw": "{\n  \"method\": \"POST\",\n  \"url\": \"http://localhost:3001/api/orders/create\",\n  \"status_code\": 500,\n  \"error_message\": \"Connection timeout saat menyimpan order\",\n  \"error_stack\": \"Error: Connection timeout\\n    at saveOrder (src/services/order.js:42:10)\\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\",\n  \"request_body\": {\n    \"orderId\": \"ORD-TEST-001\",\n    \"customerId\": \"CUST-12345\",\n    \"amount\": 150000,\n    \"items\": [\n      { \"sku\": \"SKU-001\", \"qty\": 2, \"price\": 75000 }\n    ]\n  },\n  \"headers\": {\n    \"content-type\": \"application/json\",\n    \"x-request-id\": \"req-test-abc123\",\n    \"user-agent\": \"PostmanRuntime/7.36\"\n  },\n  \"userid\": \"SINCHEN\",\n  \"delegatedto\": \"SINCHEN\",\n  \"auth_token\": \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\",\n  \"notes\": \"This error was reported through the fallback API.\",\n  \"to\": [\"it-support@example.com\"],\n  \"save_to_db\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/errors/report",
@@ -586,6 +586,60 @@
                   "        pm.expect(jsonData.data.saved_to_db).to.eql(true);",
                   "        pm.expect(jsonData.data).to.have.property('id');",
                   "        pm.environment.set('errorId', jsonData.data.id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Report Error (dev mode)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "authentication",
+                "value": "{{authToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"POST\",\n  \"url\": \"http://localhost:3001/api/orders/create\",\n  \"status_code\": 500,\n  \"error_message\": \"Connection timeout saat menyimpan order (dev mode test)\",\n  \"error_stack\": \"Error: Connection timeout\\n    at saveOrder (src/services/order.js:42:10)\",\n  \"request_body\": {\n    \"orderId\": \"ORD-DEV-001\",\n    \"customerId\": \"CUST-DEV-001\",\n    \"amount\": 250000\n  },\n  \"headers\": {\n    \"content-type\": \"application/json\"\n  },\n  \"userid\": \"SINCHEN\",\n  \"delegatedto\": \"SINCHEN\",\n  \"notes\": \"This report should be saved to the dev database.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/errors/report?devmode=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["errors", "report"],
+              "query": [
+                {
+                  "key": "devmode",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 when SMTP is configured', function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});",
+                  "pm.test('Saved to dev DB and returned id on success', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (pm.response.code === 200) {",
+                  "        pm.expect(jsonData.success).to.eql(true);",
+                  "        pm.expect(jsonData.data.saved_to_db).to.eql(true);",
+                  "        pm.expect(jsonData.data).to.have.property('id');",
                   "    }",
                   "});"
                 ],

@@ -40,7 +40,15 @@ const stringify = (value) => {
   }
 };
 
-const insertErrorLog = async (payload) => {
+const parseDevmode = (raw) => {
+  if (raw === undefined || raw === null || raw === '') {
+    return false;
+  }
+  const normalized = String(raw).toLowerCase();
+  return normalized === 'true' || normalized === '1' || normalized === 'yes';
+};
+
+const insertErrorLog = async (payload, devmode = false) => {
   const sql = `
     INSERT INTO dbo.logging_mike (
       request_body,
@@ -73,28 +81,33 @@ const insertErrorLog = async (payload) => {
     )
   `;
 
-  const result = await query(sql, {
-    request_body: stringify(payload.request_body),
-    headers: stringify(payload.headers),
-    userid: payload.userid ?? null,
-    delegatedto: payload.delegatedto ?? null,
-    method: payload.method,
-    url: payload.url,
-    auth_token: payload.auth_token ?? null,
-    error_message: payload.error_message,
-    error_stack: payload.error_stack ?? null,
-    status_code: payload.status_code ?? null,
-  });
+  const result = await query(
+    sql,
+    {
+      request_body: stringify(payload.request_body),
+      headers: stringify(payload.headers),
+      userid: payload.userid ?? null,
+      delegatedto: payload.delegatedto ?? null,
+      method: payload.method,
+      url: payload.url,
+      auth_token: payload.auth_token ?? null,
+      error_message: payload.error_message,
+      error_stack: payload.error_stack ?? null,
+      status_code: payload.status_code ?? null,
+    },
+    devmode
+  );
 
   return result[0]?.id ?? null;
 };
 
 export const reportError = asyncHandler(async (req, res) => {
   const { to, notes, save_to_db: saveToDb, ...errorPayload } = req.body;
+  const devmode = parseDevmode(req.query.devmode);
 
   let insertedId = null;
   if (saveToDb) {
-    insertedId = await insertErrorLog(errorPayload);
+    insertedId = await insertErrorLog(errorPayload, devmode);
   }
 
   if (!transporter) {

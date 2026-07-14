@@ -1,50 +1,66 @@
 import sql from 'mssql';
 import logger from './logger.js';
+import config from './index.js';
 
-let pool = null;
-
-const dbConfig = {
-  server: process.env.MS_SQL_DB_SERVER,
-  database: process.env.MS_SQL_DB_NAME,
-  user: process.env.MS_SQL_DB_USER,
-  password: process.env.MS_SQL_DB_PWD,
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-  },
+const pools = {
+  prod: null,
+  dev: null,
 };
 
-export const connectDB = async () => {
-  if (pool) {
-    logger.warn('Database connection pool already exists');
-    return pool;
+const buildConfig = (isDev) => {
+  const dbConfig = isDev ? config.db.dev : config.db.prod;
+  return {
+    server: dbConfig.server,
+    database: dbConfig.database,
+    user: dbConfig.user,
+    password: dbConfig.password,
+    options: {
+      encrypt: false,
+      trustServerCertificate: true,
+    },
+  };
+};
+
+export const connectDB = async (devmode = false) => {
+  const mode = devmode ? 'dev' : 'prod';
+
+  if (pools[mode]) {
+    logger.warn(`Database connection pool for ${mode} already exists`);
+    return pools[mode];
   }
 
   try {
-    pool = await sql.connect(dbConfig);
-    logger.info('Database connection pool created');
-    return pool;
+    pools[mode] = await sql.connect(buildConfig(devmode));
+    logger.info(`Database connection pool created for ${mode}`);
+    return pools[mode];
   } catch (error) {
-    logger.error({ err: error }, 'Database connection failed');
+    logger.error(
+      { err: error, mode },
+      `Database connection failed for ${mode}`
+    );
     throw error;
   }
 };
 
-export const query = async (sqlString, params = {}) => {
-  if (!pool) {
-    await connectDB();
+export const query = async (sqlString, params = {}, devmode = false) => {
+  const mode = devmode ? 'dev' : 'prod';
+
+  if (!pools[mode]) {
+    await connectDB(devmode);
   }
+
+  const pool = pools[mode];
 
   try {
     const request = pool.request();
-    for (const [key, value] of Object.entries(params)) {
-      request.input(key, value);
+    for (const [paramName, value] of Object.entries(params)) {
+      request.input(paramName, value);
     }
     const result = await request.query(sqlString);
     return result.recordset;
   } catch (error) {
     logger.error(
-      { err: error, sql: sqlString, params },
+      { err: error, sql: sqlString, params, mode },
       'Database query failed'
     );
     throw error;
@@ -52,18 +68,22 @@ export const query = async (sqlString, params = {}) => {
 };
 
 export const closeDb = async () => {
-  if (!pool) {
-    return;
+  for (const [mode, pool] of Object.entries(pools)) {
+    if (pool) {
+      try {
+        await pool.close();
+        logger.info(`Database connection pool closed for ${mode}`);
+      } catch (error) {
+        logger.error(
+          { err: error, mode },
+          'Failed to close database connection pool'
+        );
+      }
+    }
   }
 
-  try {
-    await pool.close();
-    pool = null;
-    logger.info('Database connection pool closed');
-  } catch (error) {
-    logger.error({ err: error }, 'Failed to close database connection pool');
-    throw error;
-  }
+  pools.prod = null;
+  pools.dev = null;
 };
 
 export default { connectDB, query, closeDb };

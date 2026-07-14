@@ -167,10 +167,14 @@ Override it with the `LMS_DECODE_URL` environment variable. The service must acc
 | `PORT`                 | `3000`                                             | Port the server listens on                                |
 | `LOG_LEVEL`            | `info`                                             | Pino log level (trace, debug, info, warn, error, fatal)   |
 | `LMS_DECODE_URL`       | `http://192.168.1.38/api/lms-dev/v1/decode`        | External LMS token decode endpoint                        |
-| `MS_SQL_DB_SERVER`     | —                                                  | MSSQL server hostname/instance                            |
+| `MS_SQL_DB_SERVER`     | —                                                  | MSSQL server hostname/instance (production / default)     |
 | `MS_SQL_DB_NAME`       | —                                                  | MSSQL database name (e.g., `lapifactory`)                 |
 | `MS_SQL_DB_USER`       | —                                                  | MSSQL username                                            |
 | `MS_SQL_DB_PWD`        | —                                                  | MSSQL password                                            |
+| `MS_SQL_DEV_DB_SERVER` | `MS_SQL_DB_SERVER` value                           | MSSQL dev server hostname/instance                        |
+| `MS_SQL_DEV_DB_NAME`   | `MS_SQL_DB_NAME` value                             | MSSQL dev database name                                   |
+| `MS_SQL_DEV_DB_USER`   | `MS_SQL_DB_USER` value                             | MSSQL dev username                                        |
+| `MS_SQL_DEV_DB_PWD`    | `MS_SQL_DB_PWD` value                              | MSSQL dev password                                        |
 | `SMTP_HOST`            | —                                                  | SMTP server hostname                                      |
 | `SMTP_PORT`            | —                                                  | SMTP server port                                          |
 | `SMTP_SECURE`          | `false`                                            | Use TLS for SMTP (`true`/`false`)                         |
@@ -191,7 +195,85 @@ All endpoints except `GET /api/v1/health` require an authentication header.
 - `GET /api/v1/errors` - List recent errors from `logging_mike` (supports `limit`, `status_code`, `search`, `from`, `to`)
 - `GET /api/v1/errors/:id` - Get a single error by ID
 - `POST /api/v1/errors/:id/email` - Send a full-context alert email for an existing error row (also limited to 10 req / 15 min per IP)
-- `POST /api/v1/errors/report` - Fallback: receive error context from the client, save it to `logging_mike`, and send an alert email (also limited to 10 req / 15 min per IP)
+- `POST /api/v1/errors/report` - Fallback: receive error context from the client, save it to `logging_mike`, and send an alert email. Use `?devmode=true` to write to the dev database instead of prod (also limited to 10 req / 15 min per IP)
+
+### Error report database mode
+
+By default `POST /api/v1/errors/report` writes to the production MSSQL database configured in `MS_SQL_DB_*`. Append `?devmode=true` to write the row to the dev database configured in `MS_SQL_DEV_DB_*` instead.
+
+#### Full request body example
+
+```json
+{
+  "method": "POST",
+  "url": "http://localhost:3001/api/orders/create",
+  "status_code": 500,
+  "error_message": "Connection timeout saat menyimpan order",
+  "error_stack": "Error: Connection timeout\n    at saveOrder (src/services/order.js:42:10)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)",
+  "request_body": {
+    "orderId": "ORD-TEST-001",
+    "customerId": "CUST-12345",
+    "amount": 150000,
+    "items": [{ "sku": "SKU-001", "qty": 2, "price": 75000 }]
+  },
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "req-test-abc123",
+    "user-agent": "MyApp/1.0"
+  },
+  "userid": "SINCHEN",
+  "delegatedto": "SINCHEN",
+  "auth_token": "Bearer eyJhbGciOiJIUzI1NiIs...",
+  "notes": "User klik Submit gagal — perlu dicek service order.",
+  "to": ["it-support@example.com"],
+  "save_to_db": true
+}
+```
+
+#### Production (default)
+
+```bash
+curl -X POST "http://localhost:3000/api/v1/errors/report" \
+  -H "Content-Type: application/json" \
+  -H "authentication: <token>" \
+  -d '{
+    "method": "POST",
+    "url": "http://localhost:3001/api/orders/create",
+    "status_code": 500,
+    "error_message": "Connection timeout saat menyimpan order"
+  }'
+```
+
+#### Dev mode
+
+```bash
+curl -X POST "http://localhost:3000/api/v1/errors/report?devmode=true" \
+  -H "Content-Type: application/json" \
+  -H "authentication: <token>" \
+  -d '{
+    "method": "POST",
+    "url": "http://localhost:3001/api/orders/create",
+    "status_code": 500,
+    "error_message": "Test error for dev database"
+  }'
+```
+
+Accepted values for `devmode` are `true`, `1`, or `yes`. Any other value (or omitting the parameter) uses the production database.
+
+#### Response
+
+```json
+{
+  "success": true,
+  "message": "Error reported and alert sent",
+  "data": {
+    "messageId": "<122af0f9-...>",
+    "recipients": ["it-support@example.com"],
+    "saved_to_db": true,
+    "id": 6944
+  }
+}
+```
 
 ## Client Error Modal Widget
 

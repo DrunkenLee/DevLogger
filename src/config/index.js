@@ -19,11 +19,25 @@ export const config = {
   lmsDecodeUrl:
     process.env.LMS_DECODE_URL || 'http://192.168.1.38/api/lms-dev/v1/decode',
   db: {
-    server: process.env.MS_SQL_DB_SERVER || '',
-    database: process.env.MS_SQL_DB_NAME || '',
-    user: process.env.MS_SQL_DB_USER || '',
-    password: process.env.MS_SQL_DB_PWD || '',
-    port: Number(process.env.MS_SQL_DB_PORT) || 1433,
+    prod: {
+      server: process.env.MS_SQL_DB_SERVER || '',
+      database: process.env.MS_SQL_DB_NAME || '',
+      user: process.env.MS_SQL_DB_USER || '',
+      password: process.env.MS_SQL_DB_PWD || '',
+      port: Number(process.env.MS_SQL_DB_PORT) || 1433,
+    },
+    dev: {
+      server:
+        process.env.MS_SQL_DEV_DB_SERVER || process.env.MS_SQL_DB_SERVER || '',
+      database:
+        process.env.MS_SQL_DEV_DB_NAME || process.env.MS_SQL_DB_NAME || '',
+      user: process.env.MS_SQL_DEV_DB_USER || process.env.MS_SQL_DB_USER || '',
+      password:
+        process.env.MS_SQL_DEV_DB_PWD || process.env.MS_SQL_DB_PWD || '',
+      port:
+        Number(process.env.MS_SQL_DEV_DB_PORT || process.env.MS_SQL_DB_PORT) ||
+        1433,
+    },
   },
   email: {
     smtpHost: process.env.SMTP_HOST || '',

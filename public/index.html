@@ -632,11 +632,14 @@ axios.interceptors.response.use(null, (error) =&gt; {
       <span class="badge post">POST</span> &nbsp;<code class="inline"
         >/api/v1/errors/report</code
       >
+      <code class="inline" style="margin-left: 8px">?devmode=true</code>
     </p>
     <p style="margin: 0; color: var(--muted); font-size: 14px">
       Saves the error to <code class="inline">logging_mike</code> (when
       <code class="inline">save_to_db</code>) and emails the IT recipients. Auth
-      required · rate-limited 10 req / 15 min per IP.
+      required · rate-limited 10 req / 15 min per IP. Append
+      <code class="inline">?devmode=true</code> to write the row to the dev
+      database instead of prod.
     </p>
   </div>
 
@@ -661,13 +664,28 @@ axios.interceptors.response.use(null, (error) =&gt; {
         <pre class="code-body" id="snip-req">
 {
   "method": "POST",
-  "url": "/api/orders",
+  "url": "/api/orders/create",
   "status_code": 500,
-  "error_message": "Timeout saving order",
-  "error_stack": "Error: Timeout...\n  at save()",
-  "request_body": { "orderId": 42 },
-  "userid": "12345",
-  "notes": "App: Sales Dashboard",
+  "error_message": "Connection timeout saat menyimpan order",
+  "error_stack": "Error: Connection timeout\n  at saveOrder (src/services/order.js:42:10)\n  at process.processTicksAndRejections (node:internal/process/task_queues:95:5)",
+  "request_body": {
+    "orderId": "ORD-TEST-001",
+    "customerId": "CUST-12345",
+    "amount": 150000,
+    "items": [
+      { "sku": "SKU-001", "qty": 2, "price": 75000 }
+    ]
+  },
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "req-test-abc123",
+    "user-agent": "MyApp/1.0"
+  },
+  "userid": "SINCHEN",
+  "delegatedto": "SINCHEN",
+  "auth_token": "Bearer eyJhbGciOiJIUzI1NiIs...",
+  "notes": "App: Sales Dashboard — user klik Submit gagal",
+  "to": ["it-support@example.com"],
   "save_to_db": true
 }</pre>
       </div>
@@ -702,6 +720,36 @@ axios.interceptors.response.use(null, (error) =&gt; {
 }</pre>
       </div>
     </div>
+  </div>
+
+  <div class="code reveal" style="margin-top: 20px">
+    <div class="code-head">
+      <span class="dots"><i></i><i></i><i></i></span>
+      <span class="fname">curl — dev mode example</span>
+      <button class="copy-btn" data-target="#snip-curl">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg
+        ><span class="copy-label">Salin</span>
+      </button>
+    </div>
+    <pre class="code-body" id="snip-curl">
+curl -X POST "https://YOUR-DEVLOGGER-HOST/api/v1/errors/report?devmode=true" \
+  -H "Content-Type: application/json" \
+  -H "authentication: &lt;LMS_TOKEN&gt;" \
+  -d '{
+    "method": "POST",
+    "url": "/api/orders/create",
+    "status_code": 500,
+    "error_message": "Connection timeout saat menyimpan order",
+    "request_body": { "orderId": "ORD-TEST-001" },
+    "userid": "SINCHEN"
+  }'</pre>
   </div>
 
   <div class="callout warn reveal" style="margin-top: 20px">
