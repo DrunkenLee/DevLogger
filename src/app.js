@@ -36,6 +36,20 @@ app.use(
   })
 );
 
+// Downloadable Postman files for teams that call the raw API instead of the
+// widget. They live at the repo root (single source of truth) and are exposed
+// here as public attachment downloads for the docs' "raw API" section.
+const rootDir = path.join(__dirname, '..');
+for (const file of [
+  'DevLogger.postman_collection.json',
+  'DevLogger.postman_environment.json',
+]) {
+  app.get(`/${file}`, (_req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.download(path.join(rootDir, file));
+  });
+}
+
 app.use(helmet());
 app.use(cors());
 app.use(compression());

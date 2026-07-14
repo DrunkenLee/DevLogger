@@ -4,7 +4,7 @@
   name="description"
   content="Drop-in error modal that reports failures to IT — saved to MSSQL and emailed automatically. One script tag, any framework."
 />
-<link rel="stylesheet" href="/assets/site.css" />
+<link rel="stylesheet" href="assets/site.css" />
 
 <div class="ambient" aria-hidden="true">
   <div class="blob b1"></div>
@@ -16,7 +16,7 @@
 <!-- ===================== NAV ===================== -->
 <nav class="nav">
   <div class="nav-inner">
-    <a class="brand" href="/">
+    <a class="brand" href="./">
       <span class="logo" aria-hidden="true"
         ><svg
           viewBox="0 0 24 24"
@@ -40,7 +40,7 @@
       <a href="#demo">Live Demo</a>
       <a href="#config">Config</a>
       <a href="#api">API</a>
-      <a href="/workflow.html">Workflow</a>
+      <a href="workflow.html">Workflow</a>
       <a
         class="nav-cta btn btn-primary"
         style="padding: 8px 16px; font-size: 13.5px"
@@ -195,7 +195,7 @@
         </div>
         <pre class="code-body" id="snip-load">
 &lt;!-- Load once, anywhere before you use it --&gt;
-&lt;script src="https://YOUR-DEVLOGGER-HOST/devlogger-modal.js"&gt;&lt;/script&gt;</pre>
+&lt;script src="http://192.168.1.38/api/DevLogger/devlogger-modal.js"&gt;&lt;/script&gt;</pre>
       </div>
     </div>
 
@@ -223,7 +223,7 @@
         </div>
         <pre class="code-body" id="snip-init">
 DevLoggerModal.init({
-  apiBaseUrl: "https://YOUR-DEVLOGGER-HOST/api/v1",
+  apiBaseUrl: "http://192.168.1.38/api/DevLogger/api/v1",
   token: window.LMS_TOKEN,      // the logged-in LMS token
   appName: "Nama Modul Anda",   // shown to IT in the report
   userId: currentUser.log_NIK   // optional, helps IT trace it
@@ -297,9 +297,13 @@ try {
     <div class="demo reveal">
       <div class="field">
         <label for="d-api">API base URL</label>
-        <input id="d-api" type="text" value="/api/v1" />
+        <input
+          id="d-api"
+          type="text"
+          value="http://192.168.1.38/api/DevLogger/api/v1"
+        />
         <p class="hint">
-          Same-origin default. Reporting hits
+          Deployed DevLogger API base. Reporting hits
           <code class="inline">POST {base}/errors/report</code>.
         </p>
       </div>
@@ -758,6 +762,64 @@ curl -X POST "https://YOUR-DEVLOGGER-HOST/api/v1/errors/report?devmode=true" \
     <code class="inline">Authorization: Bearer &lt;token&gt;</code>. The widget
     sets both for you when you provide <code class="inline">token</code>.
   </div>
+
+  <div class="callout reveal" style="margin-top: 18px">
+    <strong>Prefer the raw API?</strong> Skip the widget and import the
+    ready-made Postman collection — every endpoint with example bodies and
+    tests, pre-pointed at the deployed base URL. Import the environment too for
+    the <code class="inline">baseUrl</code>/<code class="inline"
+      >authToken</code
+    >
+    variables.
+    <div
+      style="
+        margin-top: 14px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      "
+    >
+      <a
+        class="btn btn-primary"
+        href="DevLogger.postman_collection.json"
+        download
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="M7 10l5 5 5-5" />
+          <path d="M12 15V3" />
+        </svg>
+        Download Postman collection
+      </a>
+      <a
+        class="btn btn-ghost"
+        href="DevLogger.postman_environment.json"
+        download
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="M7 10l5 5 5-5" />
+          <path d="M12 15V3" />
+        </svg>
+        Environment
+      </a>
+    </div>
+  </div>
 </section>
 
 <!-- ===================== CTA ===================== -->
@@ -782,7 +844,7 @@ curl -X POST "https://YOUR-DEVLOGGER-HOST/api/v1/errors/report?devmode=true" \
       See how a single click travels from a user’s screen all the way to your
       inbox — and why that saves the team hours.
     </p>
-    <a class="btn btn-primary" href="/workflow.html">
+    <a class="btn btn-primary" href="workflow.html">
       Read the workflow
       <svg
         viewBox="0 0 24 24"
@@ -801,20 +863,22 @@ curl -X POST "https://YOUR-DEVLOGGER-HOST/api/v1/errors/report?devmode=true" \
   <div class="wrap">
     <span>DevLogger · internal error reporting for company modules</span>
     <span
-      ><a href="/workflow.html">Workflow</a> &nbsp;·&nbsp;
-      <a href="/devlogger-modal.js">devlogger-modal.js</a> &nbsp;·&nbsp;
-      <a href="/health">/health</a></span
+      ><a href="workflow.html">Workflow</a> &nbsp;·&nbsp;
+      <a href="devlogger-modal.js">devlogger-modal.js</a> &nbsp;·&nbsp;
+      <a href="health">/health</a></span
     >
   </div>
 </footer>
 
 <!-- The real widget + demo wiring -->
-<script src="/devlogger-modal.js"></script>
-<script src="/assets/site.js"></script>
+<script src="devlogger-modal.js"></script>
+<script src="assets/site.js"></script>
 <script>
   (function () {
     function apply() {
-      var api = (document.getElementById('d-api') || {}).value || '/api/v1';
+      var api =
+        (document.getElementById('d-api') || {}).value ||
+        'http://192.168.1.38/api/DevLogger/api/v1';
       var token = (document.getElementById('d-token') || {}).value || '';
       DevLoggerModal.init({
         apiBaseUrl: api,
