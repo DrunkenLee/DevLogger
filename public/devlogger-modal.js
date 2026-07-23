@@ -34,6 +34,7 @@
     autoContext: true, // auto-fill url/method/userid from the browser
     userId: '', // optional current user id/NIK for the report
     timeoutMs: 15000, // report request timeout
+    devmode: false, // append ?devmode=true so DevLogger uses the dev LMS/DB
     onReport: null, // optional (result) => void  on success
     onReportError: null, // optional (error) => void  on failure
   };
@@ -203,6 +204,9 @@
       );
     }
     var url = config.apiBaseUrl.replace(/\/+$/, '') + '/errors/report';
+    if (config.devmode) {
+      url += '?devmode=true';
+    }
     var token = resolveToken();
     var headers = { 'Content-Type': 'application/json' };
     if (token) {
